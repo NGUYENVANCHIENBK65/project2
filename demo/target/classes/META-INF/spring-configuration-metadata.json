@@ -1,0 +1,27 @@
+{
+  "groups": [
+    {
+      "name": "file",
+      "type": "com.example.demo.config.FileStorageProperties",
+      "sourceType": "com.example.demo.config.FileStorageProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "file.libre-office-path",
+      "type": "java.lang.String",
+      "sourceType": "com.example.demo.config.FileStorageProperties"
+    },
+    {
+      "name": "file.temp-export-excel",
+      "type": "java.lang.String",
+      "sourceType": "com.example.demo.config.FileStorageProperties"
+    },
+    {
+      "name": "file.upload-dir",
+      "type": "java.lang.String",
+      "sourceType": "com.example.demo.config.FileStorageProperties"
+    }
+  ],
+  "hints": []
+}

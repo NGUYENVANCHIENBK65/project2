@@ -1,17 +1,19 @@
 package com.example.demo.service;
 
+
 import com.example.demo.config.FileStorageProperties;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import javax.activation.MimetypesFileTypeMap;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.http.HttpHeaders;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,21 +23,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class FileStorageService extends BaseService{
-    private static final Logger log = LogManager.getLogger(FileStorageService.class);
+public class FileStorageService {
     private final Path fileStorageLocation;
     private final String tempExportExcel;
 	private final String libreOfficePath;
 
     @Autowired
-    public FileStorageService(FileStorageProperties fileStorageProperties) throws BusinessException {
+    public FileStorageService(FileStorageProperties fileStorageProperties) throws Exception {
 		this.fileStorageLocation = Paths.get(fileStorageProperties.getUploadDir()).toAbsolutePath().normalize();
 		this.tempExportExcel = fileStorageProperties.getTempExportExcel();
 		this.libreOfficePath = fileStorageProperties.getLibreOfficePath();
 		try {
 			Files.createDirectories(this.fileStorageLocation);
 		} catch (Exception ex) {
-			throw new BusinessException(
+			throw new Exception(
 					"Could not create the directory where the uploaded files will be stored.\n" + ex.getMessage());
 		}
 	}
@@ -46,17 +47,17 @@ public class FileStorageService extends BaseService{
 	public String getLibreOfficePath() {
 		return this.libreOfficePath;
 	}
-    public Resource loadFileAsResource(String fileName) throws BusinessException {
+    public Resource loadFileAsResource(String fileName) throws Exception {
 		try {
 			Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
 			Resource resource = new UrlResource(filePath.toUri());
 			if (resource.exists()) {
 				return resource;
 			} else {
-				throw new BusinessException("File not found " + fileName);
+				throw new Exception("File not found " + fileName);
 			}
 		} catch (MalformedURLException ex) {
-			throw new BusinessException("File not found " + fileName + "\n" + ex.getMessage());
+			throw new Exception("File not found " + fileName + "\n" + ex.getMessage());
 		}
 	}
 
@@ -66,7 +67,7 @@ public class FileStorageService extends BaseService{
 		headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"");
 		return headers;
 	}
-    public String saveFile(String relativePath, MultipartFile multipartFile) throws BusinessException {
+    public String saveFile(String relativePath, MultipartFile multipartFile) throws Exception {
 		Path folderPath = Paths.get(this.fileStorageLocation.normalize().toString(), relativePath).normalize();
 		String fileName = multipartFile.getOriginalFilename();
 		Path filePath = folderPath.resolve(fileName);
@@ -74,8 +75,7 @@ public class FileStorageService extends BaseService{
 			try {
 				FileUtils.forceMkdirParent(filePath.toFile());
 			} catch (IOException e) {
-				FileStorageService.log.error(e.getMessage(), e);
-				throw new BusinessException(this.translator.toLocale("folder.can.not.create"));
+				throw new Exception("folder.can.not.create");
 			}
 		}
 		while (filePath.toFile().exists()) {
@@ -85,8 +85,7 @@ public class FileStorageService extends BaseService{
 		try {
 			multipartFile.transferTo(filePath);
 		} catch (IllegalStateException | IOException e) {
-			FileStorageService.log.error(e.getMessage(), e);
-			throw new BusinessException(this.translator.toLocale("file.can.not.create"));
+			throw new Exception("file.can.not.create");
 		}
 		return this.fileStorageLocation.normalize().relativize(filePath).normalize().toString().replace("\\", "/");
 	}
@@ -103,7 +102,6 @@ public class FileStorageService extends BaseService{
 			try {
 				FileUtils.forceDelete(file);
 			} catch (IOException e) {
-				FileStorageService.log.error(e.getMessage(), e);
 				return false;
 			}
 		}

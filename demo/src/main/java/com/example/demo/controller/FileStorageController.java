@@ -1,23 +1,40 @@
 package com.example.demo.controller;
-import java.io.IOException;
-import org.springframework.boot.autoconfigure.web.ServerProperties.Tomcat.Resource;
+
+import com.example.demo.service.FileStorageService;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.PostMapping;
 import javax.servlet.http.HttpServletRequest;
 
 
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.HandlerMapping;
+
+@RestController
+@RequestMapping("/files")
 public class FileStorageController {
+
+    private final FileStorageService fileStorageService;
+
+    public FileStorageController(FileStorageService fileStorageService) {
+        this.fileStorageService = fileStorageService;
+    }
+
+
     @PostMapping("/**")
-    @PreAuthorize("hasAuthority('**/**')")
-    public ResponseEnity<Object> post(HttpServletRequest request) throws BusinessException, IOException{
+    public ResponseEntity<Object> post(HttpServletRequest request) throws Exception {
         return this.fetchInfo(request);
     }
 
-    private ResponseEnity<Object> fetchInfo(HttpServletRequest request) throws BusinessException, IOException{
+    private ResponseEntity<Object> fetchInfo(HttpServletRequest request) throws Exception {
         String relativeUrl = this.extractRelativeUrl(request);
-        Resource resource = this.FileStorageService.loadFileAsResource(relativeUrl);
-        HttpHeaders httpHeaders = this.FileStorageService.loadHttpHeaders(resource);
-        return new ResponseEnity<>(resource, httpHeaders, HttpStatus.OK);
+        Resource resource = this.fileStorageService.loadFileAsResource(relativeUrl);
+        HttpHeaders httpHeaders = this.fileStorageService.loadHttpHeaders(resource);
+        return new ResponseEntity<>(resource, httpHeaders, HttpStatus.OK);
     }
 
     private String extractRelativeUrl(HttpServletRequest request){
